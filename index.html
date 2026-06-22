@@ -1,0 +1,1594 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Byte Brainiacs</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<style>
+/* ─── Tokens ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#F5F3FF;--navy2:#EDE9FE;--cyan:#7C3AED;--violet:#A855F7;
+  --white:#1E1433;--slate:#6B5B8A;
+  --glass:rgba(124,58,237,.045);--glass2:rgba(124,58,237,.08);
+  --border:rgba(124,58,237,.18);
+  --red:#FF5252;--green:#4ADE80;--yellow:#FFD166;--orange:#A855F7;
+  --fd:'Space Grotesk',sans-serif;--fb:'Inter',sans-serif;--fm:'JetBrains Mono',monospace;
+}
+html{scroll-behavior:smooth}
+body{background:var(--navy);color:var(--white);font-family:var(--fb);min-height:100vh;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+
+/* ─── Canvas ── */
+#bg{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.35}
+
+/* ─── Nav ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 5vw;height:64px;background:rgba(245,243,255,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
+.logo{font-family:var(--fd);font-size:1.2rem;font-weight:700;display:flex;align-items:center;gap:8px;cursor:pointer}
+.logo .c{color:var(--cyan)}
+.nav-links{display:flex;gap:2rem;align-items:center;font-family:var(--fd);font-size:.88rem;font-weight:500}
+.nav-links a{color:var(--slate);cursor:pointer;transition:color .2s}
+.nav-links a:hover,.nav-links a.active{color:var(--cyan)}
+.nav-cta{background:linear-gradient(135deg,var(--violet),var(--cyan));color:var(--navy)!important;padding:8px 20px;border-radius:3px;font-weight:600!important}
+
+/* ─── Pages ── */
+.page{display:none;position:relative;z-index:1;padding-top:64px}
+.page.active{display:block}
+
+/* ─── Shared ── */
+.btn{font-family:var(--fd);font-weight:600;font-size:.95rem;padding:12px 28px;border-radius:3px;border:none;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.btn-grad{background:linear-gradient(135deg,var(--violet),var(--cyan));color:var(--navy)}
+.btn-grad:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(124,58,237,.22)}
+.btn-outline{background:transparent;color:var(--white);border:1px solid var(--border)}
+.btn-outline:hover{border-color:var(--cyan);color:var(--cyan)}
+.btn-full{width:100%;padding:14px;font-size:1rem}
+.chip{display:inline-block;font-size:.72rem;font-weight:600;padding:3px 10px;border-radius:20px}
+.chip-cyan{background:rgba(124,58,237,.12);color:var(--cyan);border:1px solid rgba(124,58,237,.25)}
+.chip-violet{background:rgba(168,85,247,.15);color:#C084FC;border:1px solid rgba(168,85,247,.3)}
+.chip-yellow{background:rgba(255,209,102,.12);color:var(--yellow);border:1px solid rgba(255,209,102,.25)}
+.chip-green{background:rgba(74,222,128,.12);color:var(--green);border:1px solid rgba(74,222,128,.25)}
+.alert{border-radius:8px;padding:.8rem 1rem;font-size:.84rem;margin-bottom:1rem;display:none}
+.alert-err{background:rgba(255,82,82,.12);border:1px solid rgba(255,82,82,.3);color:var(--red)}
+.alert-ok{background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.3);color:var(--green)}
+.alert-info{background:rgba(124,58,237,.07);border:1px solid rgba(124,58,237,.18);color:var(--slate)}
+.alert-info strong{color:var(--cyan)}
+
+/* ─── Form ── */
+.field{margin-bottom:1rem}
+.field label{display:block;font-size:.74rem;font-weight:600;color:var(--slate);margin-bottom:.4rem;letter-spacing:.05em;text-transform:uppercase}
+.field input{width:100%;padding:11px 14px;background:rgba(124,58,237,.03);border:1px solid var(--border);border-radius:3px;color:var(--white);font-family:var(--fb);font-size:.92rem;outline:none;transition:border-color .2s,box-shadow .2s;min-height:44px}
+.field input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(124,58,237,.1)}
+.field input::placeholder{color:var(--slate)}
+.field input.valid{border-color:var(--green)!important;box-shadow:0 0 0 3px rgba(74,222,128,.1)}
+.field input.invalid{border-color:var(--red)!important;box-shadow:0 0 0 3px rgba(255,82,82,.1)}
+.field-hint{font-size:.72rem;margin-top:.35rem;padding-left:2px;display:none;align-items:center;gap:.3rem}
+.field-hint.show{display:flex}
+.field-hint.ok{color:var(--green)}
+.field-hint.err{color:var(--red)}
+.section-label{font-family:var(--fd);font-size:.74rem;font-weight:600;color:var(--slate);letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;gap:.8rem;margin:1.4rem 0 1rem}
+.section-label::before,.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ─── HOME ── */
+.hero{min-height:calc(100vh - 64px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 5vw}
+.eyebrow{font-family:var(--fd);font-size:.75rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--cyan);margin-bottom:1.5rem;display:flex;align-items:center;gap:10px}
+.eyebrow::before,.eyebrow::after{content:'';width:50px;height:1px;background:var(--cyan);opacity:.4}
+.hero h1{font-family:var(--fd);font-size:clamp(2.8rem,7vw,5.5rem);font-weight:700;line-height:1.05;letter-spacing:-.03em;margin-bottom:1.4rem}
+.hero h1 em{font-style:normal;background:linear-gradient(135deg,var(--cyan),var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero p{font-size:1.05rem;color:var(--slate);max-width:500px;line-height:1.7;margin-bottom:2.2rem}
+.hero-btns{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center}
+.stats-row{display:flex;gap:2.5rem;flex-wrap:wrap;justify-content:center;margin-top:4.5rem;padding:2.5rem 5vw;border-top:1px solid var(--border);width:100%}
+.stat{text-align:center}
+.stat-n{font-family:var(--fd);font-size:2.4rem;font-weight:700;background:linear-gradient(135deg,var(--cyan),var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.stat-l{font-size:.76rem;color:var(--slate);margin-top:4px;letter-spacing:.05em;text-transform:uppercase}
+.section{padding:80px 5vw}
+.sec-title{font-family:var(--fd);font-size:clamp(1.5rem,3vw,2rem);font-weight:700;text-align:center;margin-bottom:2.5rem;letter-spacing:-.02em}
+.sec-title span{color:var(--cyan)}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1.4rem;max-width:980px;margin:0 auto}
+.card{background:var(--glass);border:1px solid var(--border);border-radius:4px;padding:1.8rem 1.5rem;transition:border-color .2s,transform .2s}
+.card:hover{border-color:rgba(124,58,237,.4);transform:translateY(-4px)}
+.card .icon{font-size:1.8rem;margin-bottom:.9rem}
+.card h3{font-family:var(--fd);font-weight:600;font-size:.97rem;margin-bottom:.5rem}
+.card p{font-size:.85rem;color:var(--slate);line-height:1.6}
+
+/* ─── Timeline ── */
+.htl-wrap{max-width:900px;margin:0 auto;position:relative;padding:0 5vw 2rem}
+.htl-track{display:flex;flex-direction:column;gap:0;position:relative}
+.htl-track::before{content:'';position:absolute;left:50%;top:0;bottom:0;width:2px;
+  background:repeating-linear-gradient(180deg,var(--cyan) 0,var(--cyan) 6px,transparent 6px,transparent 12px);
+  transform:translateX(-50%);opacity:.5}
+.htl-item{display:grid;grid-template-columns:1fr 60px 1fr;align-items:center;gap:0;min-height:100px}
+.htl-item:nth-child(odd) .htl-content{grid-column:1;text-align:right;padding-right:2rem}
+.htl-item:nth-child(odd) .htl-mid{grid-column:2}
+.htl-item:nth-child(odd) .htl-gap{grid-column:3}
+.htl-item:nth-child(even) .htl-gap{grid-column:1}
+.htl-item:nth-child(even) .htl-mid{grid-column:2}
+.htl-item:nth-child(even) .htl-content{grid-column:3;padding-left:2rem}
+.htl-mid{display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2;position:relative}
+.htl-node{width:42px;height:42px;border-radius:4px;background:var(--navy2);border:2px solid var(--cyan);display:flex;align-items:center;justify-content:center;font-size:1.05rem;position:relative;transition:transform .2s}
+.htl-node::before{content:'';position:absolute;inset:5px;border:1px dashed rgba(124,58,237,.4);border-radius:2px}
+.htl-item:nth-child(even) .htl-node{border-color:var(--violet)}
+.htl-item:nth-child(even) .htl-node::before{border-color:rgba(168,85,247,.4)}
+.htl-content{background:var(--glass);border:1px solid var(--border);border-radius:4px;padding:1.2rem 1.4rem;transition:border-color .25s,transform .25s,box-shadow .25s;cursor:default;position:relative}
+.htl-content::before{content:'';position:absolute;top:50%;width:1.6rem;height:2px;background:var(--cyan);opacity:.6;transform:translateY(-50%)}
+.htl-item:nth-child(odd) .htl-content::before{right:-1.6rem}
+.htl-item:nth-child(even) .htl-content::before{left:-1.6rem;background:var(--violet)}
+.htl-content:hover{border-color:rgba(124,58,237,.5);transform:scale(1.02);box-shadow:0 8px 28px rgba(124,58,237,.1)}
+.htl-item:nth-child(even) .htl-content:hover{border-color:rgba(168,85,247,.5);box-shadow:0 8px 28px rgba(168,85,247,.1)}
+.htl-date{font-family:var(--fm);font-size:.7rem;font-weight:500;color:var(--cyan);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.35rem}
+.htl-item:nth-child(even) .htl-date{color:#C084FC}
+.htl-title{font-family:var(--fd);font-weight:700;font-size:.95rem;margin-bottom:.3rem}
+.htl-desc{font-size:.81rem;color:var(--slate);line-height:1.55}
+.htl-gap{}
+
+/* ─── ABOUT ── */
+.about-banner{min-height:45vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 5vw 50px;background:radial-gradient(ellipse at 50% 0%,rgba(168,85,247,.15) 0%,transparent 70%)}
+.about-banner h1{font-family:var(--fd);font-size:clamp(2rem,5vw,3.2rem);font-weight:700}
+.about-banner p{color:var(--slate);max-width:540px;margin-top:.9rem;line-height:1.7}
+.about-body{max-width:780px;margin:0 auto;padding:50px 5vw 80px}
+.about-body h2{font-family:var(--fd);font-size:1.3rem;font-weight:600;color:var(--cyan);margin-bottom:.9rem}
+.about-body p{color:var(--slate);line-height:1.8;margin-bottom:1.8rem}
+.tl2{position:relative;padding-left:2rem;border-left:2px solid var(--border);margin-bottom:2rem}
+.tl2-item{position:relative;padding-bottom:1.8rem}
+.tl2-item::before{content:'';position:absolute;left:-2.58rem;top:7px;width:8px;height:8px;border-radius:1px;background:var(--cyan);box-shadow:0 0 6px var(--cyan);transform:rotate(45deg)}
+.tl2-tag{font-family:var(--fd);font-size:.75rem;font-weight:600;color:var(--cyan);margin-bottom:.25rem;letter-spacing:.1em;text-transform:uppercase}
+.tl2-text{font-size:.88rem;color:var(--slate);line-height:1.6}
+.org-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem}
+.org-card{background:var(--glass);border:1px solid var(--border);border-radius:4px;padding:1.4rem 1rem;text-align:center}
+.org-av{width:52px;height:52px;border-radius:6px;margin:0 auto .7rem;background:linear-gradient(135deg,var(--violet),var(--cyan));display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:1.1rem;font-weight:700;color:var(--navy)}
+.org-name{font-family:var(--fd);font-weight:600;font-size:.88rem}
+.org-role{font-size:.76rem;color:var(--slate);margin-top:.25rem}
+
+/* ─── PARTICIPANTS ── */
+.p-banner{padding:80px 5vw 50px;text-align:center;background:radial-gradient(ellipse at 50% 0%,rgba(124,58,237,.1) 0%,transparent 65%)}
+.p-banner h1{font-family:var(--fd);font-size:clamp(1.8rem,4vw,2.8rem);font-weight:700}
+.p-banner p{color:var(--slate);margin-top:.7rem}
+.counters{display:flex;gap:1.5rem;justify-content:center;flex-wrap:wrap;padding:2rem 5vw}
+.ctr{background:var(--glass);border:1px solid var(--border);border-radius:4px;padding:1.6rem 2.2rem;text-align:center}
+.ctr-n{font-family:var(--fd);font-size:2.6rem;font-weight:700;background:linear-gradient(135deg,var(--cyan),var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.ctr-l{font-size:.76rem;color:var(--slate);text-transform:uppercase;letter-spacing:.1em;margin-top:.3rem}
+.progress-wrap{max-width:880px;margin:0 auto;padding:0 5vw 2rem}
+.progress-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem}
+.progress-label{font-family:var(--fd);font-size:.82rem;font-weight:600;color:var(--slate)}
+.progress-count{font-family:var(--fd);font-size:.82rem;font-weight:700;color:var(--cyan)}
+.progress-track{height:10px;background:rgba(124,58,237,.07);border-radius:999px;overflow:hidden;border:1px solid var(--border)}
+.progress-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--violet),var(--cyan));transition:width .6s ease;position:relative}
+.progress-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(124,58,237,.15),transparent);animation:shimmer 2s infinite}
+@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}
+.progress-full .progress-fill{background:linear-gradient(90deg,var(--red),var(--orange))}
+.progress-sub{font-size:.74rem;color:var(--slate);margin-top:.5rem;text-align:center}
+.tabs{display:flex;gap:1rem;max-width:880px;margin:0 auto 1.8rem;padding:0 5vw}
+.tab{flex:1;padding:10px;border-radius:3px;border:1px solid var(--border);background:transparent;color:var(--slate);font-family:var(--fd);font-size:.85rem;font-weight:500;cursor:pointer;text-align:center;transition:all .2s}
+.tab.active{background:linear-gradient(135deg,var(--violet),var(--cyan));color:var(--navy);border-color:transparent;font-weight:600}
+.team-list{max-width:880px;margin:0 auto;padding:0 5vw 60px}
+.team-row{background:var(--glass);border:1px solid var(--border);border-radius:4px;padding:1.3rem 1.5rem;margin-bottom:.9rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.team-row-name{font-family:var(--fd);font-weight:600;font-size:1rem}
+.team-row-sub{font-size:.76rem;color:var(--slate);margin-top:3px}
+.team-code{font-family:var(--fm);font-size:.78rem;color:var(--cyan);background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);border-radius:6px;padding:2px 8px;letter-spacing:.04em;word-break:break-all;display:inline-block}
+.solo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1.1rem;max-width:880px;margin:0 auto;padding:0 5vw 60px}
+.solo-card{background:var(--glass);border:1px solid var(--border);border-radius:4px;padding:1.3rem;transition:border-color .2s}
+.solo-card:hover{border-color:rgba(124,58,237,.35)}
+.solo-av{width:40px;height:40px;border-radius:6px;background:linear-gradient(135deg,var(--violet),var(--cyan));display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-weight:700;color:var(--navy);font-size:1rem;margin-bottom:.9rem}
+.solo-name{font-family:var(--fd);font-weight:600;font-size:.95rem;margin-bottom:.2rem}
+.solo-college{font-size:.78rem;color:var(--cyan);margin-bottom:.5rem}
+.empty{text-align:center;padding:4rem 1rem;color:var(--slate)}
+.empty .emo{font-size:2.8rem;margin-bottom:1rem}
+
+/* ─── REGISTER ── */
+.reg-wrap{min-height:calc(100vh - 64px);display:flex;align-items:center;justify-content:center;padding:40px 5vw 100px;background:radial-gradient(ellipse at 30% 50%,rgba(168,85,247,.12) 0%,transparent 60%),radial-gradient(ellipse at 70% 20%,rgba(124,58,237,.08) 0%,transparent 55%)}
+.reg-outer{width:100%;max-width:520px}
+.reg-hd{text-align:center;margin-bottom:1.8rem}
+.reg-hd h1{font-family:var(--fd);font-size:1.9rem;font-weight:700}
+.reg-hd p{color:var(--slate);margin-top:.5rem;font-size:.88rem}
+.reg-closed{background:rgba(255,82,82,.1);border:1px solid rgba(255,82,82,.3);border-radius:4px;padding:2rem;text-align:center}
+.reg-closed .emo{font-size:2.5rem;margin-bottom:.8rem}
+.reg-closed h2{font-family:var(--fd);font-size:1.2rem;font-weight:700;color:var(--red);margin-bottom:.5rem}
+.reg-closed p{font-size:.85rem;color:var(--slate);line-height:1.6}
+.join-picker{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.8rem}
+.join-opt{background:var(--glass);border:2px solid var(--border);border-radius:4px;padding:1.6rem 1rem;text-align:center;cursor:pointer;transition:border-color .2s,background .2s,transform .15s}
+.join-opt:hover{border-color:rgba(124,58,237,.4);transform:translateY(-2px)}
+.join-opt.active{border-color:var(--cyan);background:rgba(124,58,237,.07)}
+.join-opt .emo{font-size:2rem;margin-bottom:.7rem}
+.join-opt h3{font-family:var(--fd);font-weight:700;font-size:.95rem;margin-bottom:.3rem}
+.join-opt p{font-size:.76rem;color:var(--slate);line-height:1.5}
+.form-panel{background:var(--glass2);border:1px solid var(--border);border-radius:6px;padding:2rem;display:none}
+.form-panel.active{display:block}
+.form-panel h2{font-family:var(--fd);font-size:1.1rem;font-weight:700;margin-bottom:1.4rem;display:flex;align-items:center;gap:.5rem}
+.college-banner{background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.2);border-radius:3px;padding:1rem 1.2rem;margin-bottom:1.2rem;display:flex;align-items:center;gap:.8rem;font-size:.84rem;color:var(--slate)}
+.college-banner .ci{font-size:1.2rem}
+.college-banner strong{color:var(--white);font-weight:600;display:block;font-size:.92rem}
+.member-row{background:rgba(124,58,237,.02);border:1px solid var(--border);border-radius:3px;padding:1rem 1.1rem;margin-bottom:.9rem}
+.member-row-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem}
+.member-row-hd span{font-family:var(--fd);font-size:.85rem;font-weight:600;color:var(--cyan)}
+.member-row-fields{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.member-row-fields .field{margin-bottom:0}
+
+/* ─── Admin link banner ── */
+.admin-link-bar{position:fixed;bottom:24px;right:24px;z-index:200}
+.admin-link-btn{display:flex;align-items:center;gap:8px;background:rgba(237,233,254,.9);border:1px solid var(--border);border-radius:50px;padding:10px 18px;font-family:var(--fd);font-size:.78rem;font-weight:600;color:var(--slate);cursor:pointer;backdrop-filter:blur(12px);transition:color .2s,border-color .2s;text-decoration:none}
+.admin-link-btn:hover{color:var(--cyan);border-color:var(--cyan)}
+
+footer{border-top:1px solid var(--border);padding:2rem 5vw;text-align:center;color:var(--slate);font-size:.8rem;position:relative;z-index:1}
+footer span{color:var(--cyan)}
+
+/* ===========================
+   Mobile Navigation
+=========================== */
+.hamburger{
+  display:none;
+  flex-direction:column;
+  justify-content:center;
+  gap:5px;
+  cursor:pointer;
+  padding:8px;
+  background:transparent;
+  border:none;
+  border-radius:4px;
+  z-index:110;
+}
+.hamburger span{
+  display:block;
+  width:24px;
+  height:2px;
+  background:var(--cyan);
+  border-radius:2px;
+  transition:transform .3s ease, opacity .3s ease;
+}
+.hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.hamburger.open span:nth-child(2){opacity:0}
+.hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+
+.mobile-nav-overlay{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:105;
+  background:rgba(245,243,255,.0);
+}
+.mobile-nav-overlay.open{display:block}
+
+.mobile-menu{
+  position:fixed;
+  top:64px;
+  left:0;
+  right:0;
+  z-index:108;
+  background:rgba(245,243,255,.97);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  padding:0 5vw;
+  max-height:0;
+  overflow:hidden;
+  transition:max-height .35s ease, padding .35s ease;
+}
+.mobile-menu.open{
+  max-height:300px;
+  padding:16px 5vw 24px;
+}
+.mobile-menu a{
+  display:block;
+  font-family:var(--fd);
+  font-size:1rem;
+  font-weight:500;
+  color:var(--slate);
+  padding:12px 0;
+  border-bottom:1px solid var(--border);
+  cursor:pointer;
+  transition:color .2s;
+}
+.mobile-menu a:last-child{border-bottom:none}
+.mobile-menu a:hover,
+.mobile-menu a.active{color:var(--cyan)}
+.mobile-menu .nav-cta{
+  color:var(--cyan)!important;
+  font-weight:700!important;
+  border-bottom:none;
+  margin-top:4px;
+}
+
+/* ===========================
+   Responsive Fixes — 700px
+=========================== */
+@media(max-width:700px){
+  .nav-links{display:none}
+  .hamburger{display:flex}
+
+  .stats-row{gap:1.5rem}
+
+  .ctr{padding:1.3rem 1.6rem}
+
+  /* Team cards — prevent overflow */
+  .team-row{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+  .team-row > div:last-child{
+    width:100%;
+    display:flex;
+    align-items:center;
+    gap:.6rem;
+    flex-wrap:wrap;
+  }
+  .team-code{
+    word-break:break-all;
+    max-width:100%;
+  }
+
+  .join-picker{grid-template-columns:1fr}
+
+  .member-row-fields{grid-template-columns:1fr}
+
+  /* Timeline — left-align on mobile */
+  .htl-track::before{left:24px}
+  .htl-item{grid-template-columns:0 48px 1fr!important}
+  .htl-item:nth-child(odd) .htl-content,
+  .htl-item:nth-child(even) .htl-content{
+    grid-column:3;
+    text-align:left;
+    padding-left:1rem;
+    padding-right:.5rem;
+  }
+  .htl-item:nth-child(odd) .htl-gap,
+  .htl-item:nth-child(even) .htl-gap{display:none}
+  .htl-item:nth-child(odd) .htl-mid,
+  .htl-item:nth-child(even) .htl-mid{grid-column:2}
+  .htl-item:nth-child(odd) .htl-content::before,
+  .htl-item:nth-child(even) .htl-content::before{left:-1rem;right:auto;width:1rem}
+
+  /* Solo grid — smaller columns */
+  .solo-grid{
+    grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+    padding:0 4vw 40px;
+  }
+
+  /* Admin button — safe position on mobile */
+  .admin-link-bar{
+    right:12px;
+    bottom:12px;
+  }
+  .admin-link-btn{
+    padding:8px 14px;
+    font-size:.72rem;
+  }
+}
+
+/* ===========================
+   Small Screen Improvements — 480px
+=========================== */
+@media(max-width:480px){
+  nav{
+    padding:0 15px;
+    height:60px;
+  }
+  .page{padding-top:60px}
+  .mobile-menu{top:60px}
+
+  .logo{
+    font-size:1rem;
+  }
+
+  .hero{
+    padding:40px 20px;
+  }
+  .hero h1{
+    font-size:2.3rem;
+  }
+  .hero p{
+    font-size:.9rem;
+  }
+  .hero-btns{
+    flex-direction:column;
+  }
+  .hero-btns .btn{
+    width:100%;
+    min-height:44px;
+  }
+
+  .stats-row{
+    flex-direction:column;
+    gap:20px;
+    padding:2rem 20px;
+  }
+  .stat-n{
+    font-size:2rem;
+  }
+
+  .counters{
+    flex-direction:column;
+    gap:1rem;
+    padding:1.5rem 20px;
+  }
+  .ctr{
+    padding:1.2rem 1.4rem;
+  }
+  .ctr-n{
+    font-size:2rem;
+  }
+
+  /* Timeline cards — more readable on tiny screens */
+  .htl-content{
+    padding:.9rem 1rem;
+  }
+  .htl-title{
+    font-size:.88rem;
+  }
+  .htl-desc{
+    font-size:.78rem;
+    line-height:1.5;
+  }
+  .htl-date{
+    font-size:.65rem;
+  }
+  .htl-wrap{
+    padding:0 12px 2rem;
+  }
+
+  /* Team rows */
+  .team-row{
+    padding:1rem;
+  }
+  .team-row-name{
+    font-size:.92rem;
+  }
+  .team-list{
+    padding:0 16px 40px;
+  }
+
+  /* Progress */
+  .progress-wrap{
+    padding:0 16px 2rem;
+  }
+
+  /* Tabs */
+  .tabs{
+    padding:0 16px;
+    gap:.6rem;
+  }
+  .tab{
+    font-size:.78rem;
+    padding:8px 6px;
+  }
+
+  /* Admin button — stay in corner, don't cover inputs */
+  .admin-link-bar{
+    right:10px;
+    bottom:10px;
+  }
+  .admin-link-btn{
+    padding:7px 12px;
+    font-size:.7rem;
+  }
+
+  /* Register form */
+  .reg-wrap{
+    padding:20px 16px 80px;
+  }
+  .form-panel{
+    padding:1.4rem 1.2rem;
+  }
+  .reg-hd h1{
+    font-size:1.5rem;
+  }
+
+  /* Inputs and buttons — touch targets */
+  .btn{
+    min-height:44px;
+  }
+  input{
+    min-height:44px;
+  }
+
+  /* Section spacing */
+  .section{
+    padding:50px 20px;
+  }
+  .about-banner{
+    padding:60px 20px 40px;
+  }
+  .about-body{
+    padding:30px 20px 60px;
+  }
+
+  /* Cards grid — single column on tiny screens */
+  .card-grid{
+    grid-template-columns:1fr;
+  }
+  .org-grid{
+    grid-template-columns:1fr 1fr;
+  }
+
+  /* Solo grid — single column on tiny screens */
+  .solo-grid{
+    grid-template-columns:1fr;
+    padding:0 16px 40px;
+  }
+
+  /* p-banner */
+  .p-banner{
+    padding:60px 20px 30px;
+  }
+}
+
+/* ===========================
+   Small Screen Improvements — 375px
+=========================== */
+@media(max-width:375px){
+  .hero h1{
+    font-size:2rem;
+  }
+  .eyebrow{
+    font-size:.65rem;
+    letter-spacing:.12em;
+  }
+  .eyebrow::before,
+  .eyebrow::after{
+    width:30px;
+  }
+  .join-opt{
+    padding:1.2rem .8rem;
+  }
+  .join-opt .emo{
+    font-size:1.6rem;
+  }
+  .org-grid{
+    grid-template-columns:1fr;
+  }
+  .tab{
+    font-size:.74rem;
+  }
+  .htl-item{
+    grid-template-columns:0 40px 1fr!important;
+  }
+  .htl-node{
+    width:34px;
+    height:34px;
+    font-size:.85rem;
+  }
+}
+
+/* ===========================
+   Small Screen Improvements — 320px
+=========================== */
+@media(max-width:320px){
+  .hero h1{
+    font-size:1.75rem;
+  }
+  .reg-hd h1{
+    font-size:1.3rem;
+  }
+  .form-panel{
+    padding:1.1rem 1rem;
+  }
+  .admin-link-btn span{
+    display:none;
+  }
+  .admin-link-btn{
+    padding:9px 10px;
+    border-radius:50%;
+    width:38px;
+    height:38px;
+    justify-content:center;
+  }
+}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+
+<!-- ══ NAV ══ -->
+<nav>
+  <div class="logo" onclick="go('home')"><span class="c">⬡</span> Byte <span class="c">Brainiacs</span></div>
+
+  <!-- Desktop nav links -->
+  <div class="nav-links">
+    <a onclick="go('home')"         id="nl-home" class="active">Home</a>
+    <a onclick="go('about')"        id="nl-about">About</a>
+    <a onclick="go('participants')" id="nl-participants">Participants</a>
+    <a onclick="go('register')"     id="nl-register" class="nav-cta">Join Now</a>
+  </div>
+
+  <!-- Mobile Navigation hamburger button -->
+  <button class="hamburger" id="hamburger" aria-label="Toggle menu" onclick="toggleMobileMenu()">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+</nav>
+
+<!-- Mobile Navigation menu -->
+<div class="mobile-nav-overlay" id="mobile-overlay" onclick="closeMobileMenu()"></div>
+<div class="mobile-menu" id="mobile-menu">
+  <a onclick="mobileGo('home')"         id="mnl-home" class="active">Home</a>
+  <a onclick="mobileGo('about')"        id="mnl-about">About</a>
+  <a onclick="mobileGo('participants')" id="mnl-participants">Participants</a>
+  <a onclick="mobileGo('register')"     id="mnl-register" class="nav-cta">Join Now →</a>
+</div>
+
+<!-- ══ HOME ══ -->
+<div class="page active" id="page-home">
+  <section class="hero">
+    <div class="eyebrow">Season 2026 · Open Registrations</div>
+    <h1>Build.<br/><em>Compete.</em><br/>Conquer.</h1>
+    <p>Byte Brainiacs is a team-based tech hackathon. Come with your squad or fly solo — we've got a spot for you either way.</p>
+    <div class="hero-btns">
+      <button class="btn btn-grad" onclick="go('register')">Join Now</button>
+      <button class="btn btn-outline" onclick="go('about')">Learn More</button>
+    </div>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-n" id="hs-teams">0</div><div class="stat-l">Teams Registered</div></div>
+      <div class="stat"><div class="stat-n" id="hs-solo">0</div><div class="stat-l">Solo Participants</div></div>
+      <div class="stat"><div class="stat-n">30</div><div class="stat-l">Team Slots Total</div></div>
+      <div class="stat"><div class="stat-n">48h</div><div class="stat-l">Competition Window</div></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2 class="sec-title">Hackathon <span>Timeline</span></h2>
+    <div class="htl-wrap">
+      <div class="htl-track">
+        <div class="htl-item">
+          <div class="htl-content"><div class="htl-date">July 1 – July 20, 2026</div><div class="htl-title">🚀 Registrations Open</div><div class="htl-desc">Teams and solo participants can sign up. Max 30 teams. Solo pool fills up — get in early.</div></div>
+          <div class="htl-mid"><div class="htl-node">🚀</div></div>
+          <div class="htl-gap"></div>
+        </div>
+        <div class="htl-item">
+          <div class="htl-gap"></div>
+          <div class="htl-mid"><div class="htl-node">👥</div></div>
+          <div class="htl-content"><div class="htl-date">July 22, 2026</div><div class="htl-title">👥 Team Assignment</div><div class="htl-desc">Solo participants get assigned to teams of 3. All teams are notified via email with their team code.</div></div>
+        </div>
+        <div class="htl-item">
+          <div class="htl-content"><div class="htl-date">July 24, 2026 · 6:00 PM</div><div class="htl-title">📋 Problem Statement Drop</div><div class="htl-desc">The challenge goes live 24 hours before the sprint. Study, plan, and prep your stack.</div></div>
+          <div class="htl-mid"><div class="htl-node">📋</div></div>
+          <div class="htl-gap"></div>
+        </div>
+        <div class="htl-item">
+          <div class="htl-gap"></div>
+          <div class="htl-mid"><div class="htl-node">⚡</div></div>
+          <div class="htl-content"><div class="htl-date">July 25, 2026 · 6:00 PM</div><div class="htl-title">⚡ 48-Hour Sprint Begins</div><div class="htl-desc">The clock starts. Build your solution from scratch. Mentors available round-the-clock.</div></div>
+        </div>
+        <div class="htl-item">
+          <div class="htl-content"><div class="htl-date">July 27, 2026 · 6:00 PM</div><div class="htl-title">🛑 Submissions Close</div><div class="htl-desc">All code and demos must be submitted. Late submissions are not accepted under any circumstances.</div></div>
+          <div class="htl-mid"><div class="htl-node">🛑</div></div>
+          <div class="htl-gap"></div>
+        </div>
+        <div class="htl-item">
+          <div class="htl-gap"></div>
+          <div class="htl-mid"><div class="htl-node">🏆</div></div>
+          <div class="htl-content"><div class="htl-date">July 28, 2026</div><div class="htl-title">🏆 Grand Finale &amp; Awards</div><div class="htl-desc">Top 3 teams present live to the judge panel. Winners announced and prizes awarded.</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0">
+    <h2 class="sec-title">Two Ways to <span>Join</span></h2>
+    <div class="card-grid">
+      <div class="card"><div class="icon">👥</div><h3>Join as a Team</h3><p>Already have your crew? Register with exactly 3 members from the same college. Get your unique team code instantly.</p></div>
+      <div class="card"><div class="icon">🙋</div><h3>Join as Individual</h3><p>Flying solo? Sign up and our admin assigns you to a team of 3. You'll be notified via email before the event.</p></div>
+      <div class="card"><div class="icon">⚡</div><h3>Compete Together</h3><p>48 hours, one problem statement. Build the best solution your team can ship under real pressure.</p></div>
+      <div class="card"><div class="icon">🏆</div><h3>Win &amp; Grow</h3><p>Top teams win prizes and fast-track access to our industry partner network and internship pipeline.</p></div>
+    </div>
+  </section>
+</div>
+
+<!-- ══ ABOUT ══ -->
+<div class="page" id="page-about">
+  <div class="about-banner">
+    <h1>About <em style="background:linear-gradient(135deg,var(--cyan),var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-style:normal">Byte Brainiacs</em></h1>
+    <p>A hackathon born from the belief that the best tech is built by teams who challenge each other to think deeper, ship faster, and dream bigger.</p>
+  </div>
+  <div class="about-body">
+    <h2>Our Mission</h2>
+    <p>Byte Brainiacs bridges the gap between academic learning and real-world engineering. We create a high-stakes environment where students collaborate and ship something meaningful in 48 hours — whether they arrive as a squad or a stranger.</p>
+    <h2>How It Works</h2>
+    <div class="tl2">
+      <div class="tl2-item"><div class="tl2-tag">Register</div><div class="tl2-text">Join as a ready-made team of exactly 3 from the same college, or register solo and enter the waiting pool. Each team receives a unique code.</div></div>
+      <div class="tl2-item"><div class="tl2-tag">Team Assignment</div><div class="tl2-text">Solo participants get grouped into teams of 3 by our admin, prioritising same-college groupings. You'll be notified via email with your team code.</div></div>
+      <div class="tl2-item"><div class="tl2-tag">Problem Drop</div><div class="tl2-text">Receive the problem statement 24 hours before kick-off. Use the warm-up window wisely.</div></div>
+      <div class="tl2-item"><div class="tl2-tag">48h Sprint</div><div class="tl2-text">Build, break, and rebuild your prototype. Mentors are live throughout.</div></div>
+      <div class="tl2-item"><div class="tl2-tag">Grand Finale</div><div class="tl2-text">Top 3 teams present to judges and compete for the championship title and prizes.</div></div>
+    </div>
+    <h2>The Organising Team</h2>
+    <div class="org-grid">
+      <div class="org-card"><div class="org-av">A</div><div class="org-name">Aryan Mehta</div><div class="org-role">Event Director</div></div>
+      <div class="org-card"><div class="org-av">P</div><div class="org-name">Priya Sharma</div><div class="org-role">Technical Lead</div></div>
+      <div class="org-card"><div class="org-av">R</div><div class="org-name">Rohan Das</div><div class="org-role">Partnerships</div></div>
+      <div class="org-card"><div class="org-av">S</div><div class="org-name">Sneha Pillai</div><div class="org-role">Operations</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PARTICIPANTS ══ -->
+<div class="page" id="page-participants">
+  <div class="p-banner">
+    <h1>Who's <em style="color:var(--cyan)">Joining</em></h1>
+    <p>Live registrations, team slots, and solo pool — updated in real time.</p>
+  </div>
+  <div class="counters">
+    <div class="ctr"><div class="ctr-n" id="ct-teams">0</div><div class="ctr-l">Teams Formed</div></div>
+    <div class="ctr"><div class="ctr-n" id="ct-slots">0</div><div class="ctr-l">Slots Remaining</div></div>
+    <div class="ctr"><div class="ctr-n" id="ct-solo">0</div><div class="ctr-l">Solo (Awaiting)</div></div>
+    <div class="ctr"><div class="ctr-n" id="ct-colleges">0</div><div class="ctr-l">Colleges</div></div>
+  </div>
+  <div class="progress-wrap" id="progress-wrap">
+    <div class="progress-header">
+      <span class="progress-label">Team Slots Filled</span>
+      <span class="progress-count" id="progress-text">0 / 30</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    <div class="progress-sub" id="progress-sub">30 slots available · Register your team now</div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" id="tab-teams" onclick="switchTab('teams')">👥 Registered Teams</div>
+    <div class="tab"        id="tab-solo"  onclick="switchTab('solo')">🙋 Solo Pool</div>
+  </div>
+  <div id="pane-teams">
+    <div class="team-list" id="team-list"></div>
+    <div class="empty" id="empty-teams" style="display:none"><div class="emo">👥</div><p>No teams yet. Be the first to bring your squad!</p><br/><button class="btn btn-grad" onclick="go('register')">Register a Team</button></div>
+  </div>
+  <div id="pane-solo" style="display:none">
+    <div class="solo-grid" id="solo-grid"></div>
+    <div class="empty" id="empty-solo" style="display:none"><div class="emo">🙋</div><p>No solo participants yet.</p><br/><button class="btn btn-grad" onclick="go('register','solo')">Join Solo</button></div>
+  </div>
+</div>
+
+<!-- ══ REGISTER ══ -->
+<div class="page" id="page-register">
+  <div class="reg-wrap">
+    <div class="reg-outer">
+      <div class="reg-hd">
+        <h1>Join the Arena</h1>
+        <p>Already have a team, or going solo? Choose your path.</p>
+      </div>
+      <div class="reg-closed" id="reg-closed" style="display:none">
+        <div class="emo">🔒</div>
+        <h2>Registrations Closed</h2>
+        <p>All 30 team slots have been filled. Follow us on social media for updates on the next edition of Byte Brainiacs.</p>
+      </div>
+      <div id="reg-open">
+        <div class="join-picker">
+          <div class="join-opt" id="opt-team" onclick="pickType('team')"><div class="emo">👥</div><h3>Join as a Team</h3><p>Exactly 3 members from the same college.</p></div>
+          <div class="join-opt" id="opt-solo" onclick="pickType('solo')"><div class="emo">🙋</div><h3>Join as Individual</h3><p>Flying solo — we'll assign you to a team.</p></div>
+        </div>
+        <!-- Team form -->
+        <div class="form-panel" id="fp-team">
+          <h2>👥 Team Registration</h2>
+          <div class="alert alert-err" id="terr"></div>
+          <div class="alert alert-ok"  id="tok"></div>
+          <div class="field"><label>Team Name</label><input type="text" id="t-name" placeholder="e.g. Circuit Breakers"/></div>
+          <div class="field">
+            <label>College / University <span style="color:var(--cyan);font-size:.68rem;text-transform:none;letter-spacing:0">(shared for all members)</span></label>
+            <input type="text" id="t-college" placeholder="Your institution name" oninput="updateCollegeBanner()"/>
+          </div>
+          <div class="section-label">Members <span style="color:var(--cyan);margin-left:.3rem;font-size:.68rem;letter-spacing:0;text-transform:none">(exactly 3 required)</span></div>
+          <div class="college-banner" id="college-banner" style="display:none">
+            <span class="ci">🏫</span>
+            <div><strong id="banner-college-name"></strong>All members are from this college.</div>
+          </div>
+          <div id="members-wrap"></div>
+          <button class="btn btn-grad btn-full" onclick="submitTeam()">Register Team</button>
+        </div>
+        <!-- Solo form -->
+        <div class="form-panel" id="fp-solo">
+          <h2>🙋 Individual Registration</h2>
+          <div class="alert alert-info" style="display:block"><strong>How it works:</strong> You'll join the solo pool. Our admin groups everyone into teams of 3 (same college preferred) and notifies you by email before the event.</div>
+          <div class="alert alert-err" id="serr"></div>
+          <div class="alert alert-ok"  id="sok"></div>
+          <div class="field"><label>Full Name</label><input type="text" id="s-name" placeholder="Your full name" oninput="validateName(this)" onblur="validateName(this)"/><div class="field-hint" id="s-name-hint"></div></div>
+          <div class="field"><label>College / University</label><input type="text" id="s-college" placeholder="Your institution name" oninput="validateName(this)" onblur="validateName(this)"/><div class="field-hint" id="s-college-hint"></div></div>
+          <div class="field"><label>Phone Number</label><input type="tel" id="s-phone" placeholder="+91 XXXXX XXXXX" maxlength="14" oninput="handlePhone(this)" onblur="validatePhone(this)"/><div class="field-hint" id="s-phone-hint"></div></div>
+          <div class="field"><label>Email Address</label><input type="email" id="s-email" placeholder="you@college.edu" oninput="validateEmail(this)" onblur="validateEmail(this)"/><div class="field-hint" id="s-email-hint"></div></div>
+          <button class="btn btn-grad btn-full" onclick="submitSolo()">Join Solo Pool</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer><span>Byte Brainiacs</span> · Built for the bold · © 2026</footer>
+
+<!-- Admin shortcut (bottom-right) — opens admin.html -->
+<div class="admin-link-bar">
+  <a href="admin.html" class="admin-link-btn" title="Organiser Panel">⚙ <span>Organiser</span></a>
+</div>
+
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs
+}
+from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyANXN1yyC7wRutzxZ5vuysadkHCnU1KHfQ",
+  authDomain: "bytebrainiacs-1f1d2.firebaseapp.com",
+  projectId: "bytebrainiacs-1f1d2",
+  storageBucket: "bytebrainiacs-1f1d2.firebasestorage.app",
+  messagingSenderId: "635432491704",
+  appId: "1:635432491704:web:64959a9c7e8b4bb818f24d",
+  measurementId: "G-J89YP2CVHF"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+/* ══════════════════════════════════════════
+   SHARED CONFIG  — must match admin.html
+══════════════════════════════════════════ */
+const TEAM_LIMIT = 30;
+
+let teams = [];
+let solos = [];
+
+async function loadData() {
+
+  const teamSnapshot =
+    await getDocs(collection(db,"teams"));
+
+  teams =
+    teamSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+  const soloSnapshot =
+    await getDocs(collection(db,"solos"));
+
+  solos =
+    soloSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+}
+
+async function syncFromStorage(){
+  await loadData();
+}
+
+/* ══ CODE GENERATOR ══ */
+function genCode(teamName, idx){
+  const slug = teamName.replace(/[^a-zA-Z]/g,'').toUpperCase().slice(0,3).padEnd(3,'X');
+  const num  = String((idx * 7 + 13) % 9000 + 1000);
+  return `BB-${slug}-${num}`;
+}
+
+/* ══ CANVAS ══ */
+(function(){
+  const cv=document.getElementById('bg'),cx=cv.getContext('2d');
+  let p=[];
+  const rs=()=>{cv.width=innerWidth;cv.height=innerHeight};
+  const ip=()=>{p=Array.from({length:Math.floor(cv.width*cv.height/14000)},()=>({x:Math.random()*cv.width,y:Math.random()*cv.height,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,r:Math.random()*2+.5}))};
+  const dr=()=>{
+    cx.clearRect(0,0,cv.width,cv.height);cx.fillStyle='#7C3AED';
+    p.forEach(q=>{q.x=(q.x+q.vx+cv.width)%cv.width;q.y=(q.y+q.vy+cv.height)%cv.height;cx.beginPath();cx.arc(q.x,q.y,q.r,0,Math.PI*2);cx.fill()});
+    cx.strokeStyle='rgba(124,58,237,.08)';cx.lineWidth=.6;
+    for(let i=0;i<p.length;i++)for(let j=i+1;j<p.length;j++){const dx=p[i].x-p[j].x,dy=p[i].y-p[j].y;if(dx*dx+dy*dy<10000){cx.beginPath();cx.moveTo(p[i].x,p[i].y);cx.lineTo(p[j].x,p[j].y);cx.stroke()}}
+    requestAnimationFrame(dr);
+  };
+  rs();ip();window.addEventListener('resize',()=>{rs();ip()});dr();
+})();
+
+/* ══ MOBILE MENU TOGGLE ══ */
+function toggleMobileMenu(){
+  const hamburger = document.getElementById('hamburger');
+  const menu      = document.getElementById('mobile-menu');
+  const overlay   = document.getElementById('mobile-overlay');
+  const isOpen    = menu.classList.contains('open');
+  if(isOpen){
+    hamburger.classList.remove('open');
+    menu.classList.remove('open');
+    overlay.classList.remove('open');
+  } else {
+    hamburger.classList.add('open');
+    menu.classList.add('open');
+    overlay.classList.add('open');
+  }
+}
+
+function closeMobileMenu(){
+  document.getElementById('hamburger').classList.remove('open');
+  document.getElementById('mobile-menu').classList.remove('open');
+  document.getElementById('mobile-overlay').classList.remove('open');
+}
+
+function mobileGo(page, subtype){
+  closeMobileMenu();
+  go(page, subtype);
+}
+
+/* ══ ROUTING ══ */
+async function go(page, subtype){
+  document.querySelectorAll('.page')
+    .forEach(p=>p.classList.remove('active'));
+
+  document.querySelectorAll('.nav-links a')
+    .forEach(a=>a.classList.remove('active'));
+
+  document.querySelectorAll('.mobile-menu a')
+    .forEach(a=>a.classList.remove('active'));
+
+  document.getElementById('page-'+page)
+    .classList.add('active');
+
+  const nl=document.getElementById('nl-'+page);
+  if(nl) nl.classList.add('active');
+
+  const mnl=document.getElementById('mnl-'+page);
+  if(mnl) mnl.classList.add('active');
+
+  window.scrollTo(0,0);
+
+  if(page==='home')
+      await updateHomeStats();
+
+  if(page==='participants')
+      await renderParticipants();
+
+  if(page==='register'){
+      await checkRegistrationOpen();
+      if(subtype) pickType(subtype);
+  }
+}
+
+/* ══ REGISTRATION GATE ══ */
+async function checkRegistrationOpen(){
+
+  await syncFromStorage();
+
+  const open =
+    teams.length < TEAM_LIMIT;
+
+  document.getElementById('reg-closed').style.display =
+    open ? 'none' : 'block';
+
+  document.getElementById('reg-open').style.display =
+    open ? 'block' : 'none';
+
+  if(open){
+    document
+      .querySelectorAll('.join-opt')
+      .forEach(o =>
+        o.classList.remove('active')
+      );
+
+    document
+      .querySelectorAll('.form-panel')
+      .forEach(p =>
+        p.classList.remove('active')
+      );
+  }
+}
+
+/* ══ HOME STATS ══ */
+async function updateHomeStats(){
+
+  await syncFromStorage();
+
+  count(
+    'hs-teams',
+    teams.length
+  );
+
+  count(
+    'hs-solo',
+    solos.filter(
+      s => s.status === 'waiting'
+    ).length
+  );
+}
+
+function count(id,target){
+  const el=document.getElementById(id);if(!el)return;
+  let start=null;
+  const step=ts=>{if(!start)start=ts;const p=Math.min((ts-start)/600,1);el.textContent=Math.floor(p*target);p<1?requestAnimationFrame(step):(el.textContent=target)};
+  requestAnimationFrame(step);
+}
+
+/* ══ REGISTER TYPE ══ */
+function pickType(type){
+  document.querySelectorAll('.join-opt').forEach(o=>o.classList.remove('active'));
+  document.querySelectorAll('.form-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('opt-'+type).classList.add('active');
+  document.getElementById('fp-'+type).classList.add('active');
+  if(type==='team'&&!document.getElementById('members-wrap').children.length) initMembers();
+}
+
+/* ══ MEMBER BUILDER (fixed 3) ══ */
+let mc=0;
+function updateCollegeBanner(){
+  const v=document.getElementById('t-college').value.trim();
+  const b=document.getElementById('college-banner');
+  if(v){b.style.display='flex';document.getElementById('banner-college-name').textContent=v;}
+  else b.style.display='none';
+}
+function addMember(){
+  mc++;const id=mc;
+  const wrap=document.getElementById('members-wrap');
+  const row=document.createElement('div');
+  row.className='member-row';row.id='mr-'+id;
+  row.innerHTML=`
+    <div class="member-row-hd"><span>Member ${id}</span></div>
+    <div class="member-row-fields">
+      <div class="field"><label>Full Name</label><input type="text" id="m${id}-name" placeholder="Full name" oninput="validateName(this)" onblur="validateName(this)"/><div class="field-hint" id="m${id}-name-hint"></div></div>
+      <div class="field"><label>Phone</label><input type="tel" id="m${id}-phone" placeholder="+91 XXXXX XXXXX" maxlength="14" oninput="handlePhone(this)" onblur="validatePhone(this)"/><div class="field-hint" id="m${id}-phone-hint"></div></div>
+      <div class="field" style="grid-column:1/-1"><label>Email</label><input type="email" id="m${id}-email" placeholder="member@college.edu" oninput="validateEmail(this)" onblur="validateEmail(this)"/><div class="field-hint" id="m${id}-email-hint"></div></div>
+    </div>`;
+  wrap.appendChild(row);
+}
+function initMembers(){document.getElementById('members-wrap').innerHTML='';mc=0;addMember();addMember();addMember();}
+
+/* ══ VALIDATION ══ */
+const EMAIL_RX=/^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+const PHONE_RX=/^(\+91[\s\-]?)?[6-9]\d{9}$/;
+function handlePhone(input){input.value=input.value.replace(/[^\d+\s\-]/g,'');if(input.value.replace(/[\s\-]/g,'').replace('+91','').length>=10)validatePhone(input)}
+function setHint(id,msg,ok){const el=document.getElementById(id);if(!el)return;if(!msg){el.className='field-hint';el.textContent='';return}el.className=`field-hint show ${ok?'ok':'err'}`;el.textContent=(ok?'✓ ':'✗ ')+msg}
+function markField(input,ok){input.classList.remove('valid','invalid');input.classList.add(ok?'valid':'invalid')}
+function validateEmail(input){
+  const v=input.value.trim(),h=input.id+'-hint';
+  if(!v){input.classList.remove('valid','invalid');setHint(h,'',true);return false}
+  if(!v.includes('@')){markField(input,false);setHint(h,'Must include @',false);return false}
+  if(!EMAIL_RX.test(v)){markField(input,false);setHint(h,'Enter a valid email (e.g. name@domain.com)',false);return false}
+  markField(input,true);setHint(h,'Valid email',true);return true
+}
+function validatePhone(input){
+  const v=input.value.trim(),h=input.id+'-hint';
+  if(!v){input.classList.remove('valid','invalid');setHint(h,'',true);return false}
+  const d=v.replace(/[\s\-]/g,'');
+  if(!PHONE_RX.test(d)){markField(input,false);setHint(h,'10-digit Indian mobile starting with 6–9',false);return false}
+  markField(input,true);setHint(h,'Valid number',true);return true
+}
+function validateName(input){
+  const v=input.value.trim(),h=input.id+'-hint';
+  if(!v){input.classList.remove('valid','invalid');setHint(h,'',true);return false}
+  if(v.length<2){markField(input,false);setHint(h,'Too short',false);return false}
+  markField(input,true);setHint(h,'',true);return true
+}
+function checkField(inputId,type){
+  const el=document.getElementById(inputId);if(!el)return false;
+  if(type==='email')return validateEmail(el);
+  if(type==='phone')return validatePhone(el);
+  return validateName(el);
+}
+function emailExists(email){
+  const e=email.toLowerCase();
+  return teams.some(t=>t.members.some(m=>m.email.toLowerCase()===e))||solos.some(s=>s.email.toLowerCase()===e);
+}
+function phoneExists(phone){
+  const p=phone.replace(/[\s\-]/g,'');
+  return teams.some(t=>t.members.some(m=>m.phone.replace(/[\s\-]/g,'')===p))||solos.some(s=>s.phone.replace(/[\s\-]/g,'')===p);
+}
+
+/* ══ SUBMIT TEAM ══ */
+async function submitTeam(){
+
+  await loadData();
+
+  const errEl =
+    document.getElementById('terr');
+
+  const okEl =
+    document.getElementById('tok');
+
+  const show = (el,msg,ok)=>{
+    el.innerHTML = msg;
+    el.style.display = 'block';
+    el.className =
+      'alert ' +
+      (ok ? 'alert-ok' : 'alert-err');
+  };
+
+  errEl.style.display='none';
+  okEl.style.display='none';
+
+  if(teams.length >= TEAM_LIMIT){
+    show(
+      errEl,
+      'Registrations are closed — all 30 team slots are filled.'
+    );
+    return;
+  }
+
+  const teamName =
+    document.getElementById('t-name')
+    .value.trim();
+
+  const college =
+    document.getElementById('t-college')
+    .value.trim();
+
+  if(!teamName){
+    show(
+      errEl,
+      'Please enter a team name.'
+    );
+    return;
+  }
+
+  if(!college){
+    show(
+      errEl,
+      'Please enter the college name.'
+    );
+    return;
+  }
+
+  if(
+    teams.find(
+      t =>
+        t.name &&
+        t.name.toLowerCase() ===
+        teamName.toLowerCase()
+    )
+  ){
+    show(
+      errEl,
+      'A team with this name already exists.'
+    );
+    return;
+  }
+
+  const rows =
+    document.querySelectorAll(
+      '.member-row'
+    );
+
+  if(rows.length !== 3){
+    show(
+      errEl,
+      'Teams must have exactly 3 members.'
+    );
+    return;
+  }
+
+  const members = [];
+
+  let hasError = false;
+
+  for(const row of rows){
+
+    const id =
+      row.id.split('-')[1];
+
+    const nameOk =
+      checkField(
+        `m${id}-name`,
+        'name'
+      );
+
+    const phoneOk =
+      checkField(
+        `m${id}-phone`,
+        'phone'
+      );
+
+    const emailOk =
+      checkField(
+        `m${id}-email`,
+        'email'
+      );
+
+    if(
+      !nameOk ||
+      !phoneOk ||
+      !emailOk
+    ){
+      hasError = true;
+      continue;
+    }
+
+    const name =
+      document.getElementById(
+        `m${id}-name`
+      ).value.trim();
+
+    const phone =
+      document.getElementById(
+        `m${id}-phone`
+      ).value.trim();
+
+    const email =
+      document.getElementById(
+        `m${id}-email`
+      ).value.trim();
+
+    if(
+      members.find(
+        m =>
+        m.email.toLowerCase() ===
+        email.toLowerCase()
+      )
+    ){
+      setHint(
+        `m${id}-email-hint`,
+        'Duplicate email within team',
+        false
+      );
+
+      markField(
+        document.getElementById(
+          `m${id}-email`
+        ),
+        false
+      );
+
+      hasError = true;
+
+      continue;
+    }
+
+    if(
+      members.find(
+        m =>
+        m.phone.replace(/[\s\-]/g,'') ===
+        phone.replace(/[\s\-]/g,'')
+      )
+    ){
+      setHint(
+        `m${id}-phone-hint`,
+        'Duplicate phone within team',
+        false
+      );
+
+      markField(
+        document.getElementById(
+          `m${id}-phone`
+        ),
+        false
+      );
+
+      hasError = true;
+
+      continue;
+    }
+
+    if(emailExists(email)){
+
+      setHint(
+        `m${id}-email-hint`,
+        'This email is already registered',
+        false
+      );
+
+      markField(
+        document.getElementById(
+          `m${id}-email`
+        ),
+        false
+      );
+
+      hasError = true;
+
+      continue;
+    }
+
+    if(phoneExists(phone)){
+
+      setHint(
+        `m${id}-phone-hint`,
+        'This phone is already registered',
+        false
+      );
+
+      markField(
+        document.getElementById(
+          `m${id}-phone`
+        ),
+        false
+      );
+
+      hasError = true;
+
+      continue;
+    }
+
+    members.push({
+      name,
+      college,
+      phone,
+      email
+    });
+  }
+
+  if(hasError){
+
+    show(
+      errEl,
+      'Please fix the highlighted fields.'
+    );
+
+    return;
+  }
+
+  const teamIdx =
+    teams.length;
+
+  const code =
+    genCode(
+      teamName,
+      teamIdx
+    );
+
+  await addDoc(
+    collection(
+      db,
+      "teams"
+    ),
+    {
+      code,
+      name: teamName,
+      college,
+      members,
+      source: "registered",
+      at: new Date().toISOString()
+    }
+  );
+
+  await loadData();
+
+  await updateHomeStats();
+
+  show(
+    okEl,
+    `✓ <strong>${teamName}</strong> registered!
+    <br/>
+    <span style="
+      font-family:var(--fm);
+      font-size:1.1rem;
+      color:var(--cyan);
+      letter-spacing:.05em">
+      ${code}
+    </span>
+    <br/>
+    <small style="color:var(--slate)">
+      Save your team code — needed for event check-in.
+    </small>`,
+    true
+  );
+
+  document.getElementById(
+    't-name'
+  ).value = '';
+
+  document.getElementById(
+    't-college'
+  ).value = '';
+
+  updateCollegeBanner();
+
+  initMembers();
+
+  await checkRegistrationOpen();
+}
+
+/* ══ SUBMIT SOLO ══ */
+async function submitSolo(){
+
+  await loadData();
+
+  const errEl=document.getElementById('serr'),
+        okEl=document.getElementById('sok');
+
+  const show=(el,msg,ok)=>{
+    el.textContent=msg;
+    el.style.display='block';
+    el.className='alert '+
+      (ok?'alert-ok':'alert-err');
+  };
+
+  errEl.style.display='none';
+  okEl.style.display='none';
+
+  const nameOk=checkField('s-name','name');
+  const colOk=checkField('s-college','name');
+  const phoneOk=checkField('s-phone','phone');
+  const emailOk=checkField('s-email','email');
+
+  if(!nameOk || !colOk || !phoneOk || !emailOk){
+    show(errEl,'Please fix the highlighted fields.');
+    return;
+  }
+
+  const name =
+    document.getElementById('s-name').value.trim();
+
+  const college =
+    document.getElementById('s-college').value.trim();
+
+  const phone =
+    document.getElementById('s-phone').value.trim();
+
+  const email =
+    document.getElementById('s-email').value.trim();
+
+  if(emailExists(email)){
+    markField(
+      document.getElementById('s-email'),
+      false
+    );
+
+    setHint(
+      's-email-hint',
+      'Already registered',
+      false
+    );
+
+    show(
+      errEl,
+      'This email is already registered.'
+    );
+
+    return;
+  }
+
+  if(phoneExists(phone)){
+    markField(
+      document.getElementById('s-phone'),
+      false
+    );
+
+    setHint(
+      's-phone-hint',
+      'Already registered',
+      false
+    );
+
+    show(
+      errEl,
+      'This phone number is already registered.'
+    );
+
+    return;
+  }
+
+  await addDoc(
+    collection(db,'solos'),
+    {
+      name,
+      college,
+      phone,
+      email,
+      status:'waiting',
+      at:new Date().toISOString()
+    }
+  );
+
+  await loadData();
+
+  await updateHomeStats();
+
+  show(
+    okEl,
+    `✓ You're in, ${name}! We'll assign you to a team and notify you at ${email}.`,
+    true
+  );
+
+  ['s-name','s-college','s-phone','s-email']
+  .forEach(id=>{
+    const el=document.getElementById(id);
+    el.value='';
+    el.classList.remove('valid','invalid');
+    setHint(id+'-hint','',true);
+  });
+}
+
+/* ══ PARTICIPANTS PAGE ══ */
+async function renderParticipants(){
+
+  await loadData();
+
+  const waiting =
+    solos.filter(
+      s => s.status === 'waiting'
+    );
+
+  const slots=Math.max(0,TEAM_LIMIT-teams.length);
+
+  const colleges = new Set([
+    ...teams
+      .filter(t => t.college)
+      .map(t => t.college.toLowerCase()),
+
+    ...solos
+      .filter(s => s.college)
+      .map(s => s.college.toLowerCase())
+  ]);
+
+  /* Update counters */
+  count('ct-teams', teams.length);
+  count('ct-slots', slots);
+  count('ct-solo', waiting.length);
+  count('ct-colleges', colleges.size);
+
+  renderProgress();
+  renderTeams();
+  renderSolos();
+}
+
+function renderProgress(){
+  const pct=Math.min(100,Math.round((teams.length/TEAM_LIMIT)*100));
+  const fill=document.getElementById('progress-fill'),wrap=document.getElementById('progress-wrap'),sub=document.getElementById('progress-sub');
+  document.getElementById('progress-text').textContent=`${teams.length} / ${TEAM_LIMIT}`;
+  setTimeout(()=>{fill.style.width=pct+'%'},50);
+  const left=TEAM_LIMIT-teams.length;
+  if(teams.length>=TEAM_LIMIT){wrap.classList.add('progress-full');sub.textContent='🔒 All slots filled — registrations closed.';sub.style.color='var(--red)';}
+  else{wrap.classList.remove('progress-full');sub.textContent=`${left} slot${left!==1?'s':''} remaining · Registration closes at 30 teams`;sub.style.color='';}
+}
+
+function renderTeams(){
+  const list=document.getElementById('team-list'),empty=document.getElementById('empty-teams');
+  list.innerHTML='';
+  if(!teams.length){empty.style.display='block';return}
+  empty.style.display='none';
+  teams.slice().reverse().forEach(team=>{
+    const isAdmin=team.source==='admin';
+    const row=document.createElement('div');
+    row.className='team-row';
+    row.innerHTML=`
+      <div>
+        <div class="team-row-name">⬡ ${team.name}</div>
+        <div class="team-row-sub">🏫 ${team.college} &nbsp;·&nbsp; ${team.members.length} members</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap">
+        <span class="team-code">${team.code}</span>
+        <span class="chip ${isAdmin?'chip-violet':'chip-cyan'}">${isAdmin?'⚙ Assigned':'✓ Registered'}</span>
+      </div>`;
+    list.appendChild(row);
+  });
+}
+
+function renderSolos(){
+  const grid=document.getElementById('solo-grid'),empty=document.getElementById('empty-solo');
+  grid.innerHTML='';
+  const waiting=solos.filter(s=>s.status==='waiting');
+  if(!waiting.length){empty.style.display='block';return}
+  empty.style.display='none';
+  waiting.slice().reverse().forEach(s=>{
+    const div=document.createElement('div');
+    div.className='solo-card';
+    div.innerHTML=`
+      <div class="solo-av">${s.name.charAt(0).toUpperCase()}</div>
+      <div class="solo-name">${s.name}</div>
+      <div class="solo-college">${s.college}</div>
+      <div style="margin-top:.7rem"><span class="chip chip-yellow">⏳ Awaiting Team</span></div>`;
+    grid.appendChild(div);
+  });
+}
+
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('pane-teams').style.display=tab==='teams'?'block':'none';
+  document.getElementById('pane-solo').style.display=tab==='solo'?'block':'none';
+}
+
+/* init */
+await loadData();
+
+await updateHomeStats();
+
+await checkRegistrationOpen();
+
+window.go = go;
+window.pickType = pickType;
+window.submitTeam = submitTeam;
+window.submitSolo = submitSolo;
+window.switchTab = switchTab;
+window.updateCollegeBanner = updateCollegeBanner;
+window.validateName = validateName;
+window.validatePhone = validatePhone;
+window.validateEmail = validateEmail;
+window.handlePhone = handlePhone;
+window.toggleMobileMenu = toggleMobileMenu;
+window.closeMobileMenu = closeMobileMenu;
+window.mobileGo = mobileGo;
+
+</script>
+</body>
+</html>
