@@ -458,6 +458,67 @@ nav{
 }
 .ctr-l{font-size:.76rem;color:var(--gray);text-transform:uppercase;letter-spacing:.1em;margin-top:.3rem}
 
+/* ─────────────────────────────────────────
+   BYTECOINS PAGE
+───────────────────────────────────────── */
+.byte-podium{
+    display:grid;
+    grid-template-columns:1fr 1.2fr 1fr;
+    gap:20px;
+    margin-bottom:40px;
+}
+
+.podium-card{
+    background:var(--bg3);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:25px;
+    text-align:center;
+}
+
+.podium-card:hover{
+    transform:translateY(-5px);
+    border-color:var(--orange);
+    box-shadow:0 10px 25px rgba(255,140,0,.15);
+}
+
+.podium-rank{
+    font-size:2rem;
+}
+
+.podium-score{
+    color:var(--orange);
+    font-size:2rem;
+    font-weight:700;
+    margin-top:10px;
+    text-shadow:0 0 10px rgba(255,140,0,.4);
+}
+
+.byte-table{
+    width:100%;
+    min-width:500px;
+    border-collapse:collapse;
+}
+
+.byte-wrap{
+    max-width:1000px;
+    margin:auto;
+    padding:50px 20px;
+    overflow-x:auto;
+}
+
+.byte-table th{
+    background:rgba(255,140,0,.1);
+    color:var(--orange);
+}
+
+.byte-table th,
+.byte-table td{
+    padding:15px;
+    border-bottom:1px solid var(--border);
+    text-align:left;
+}
+
 /* ── Progress bar ── */
 .progress-wrap{max-width:880px;margin:0 auto;padding:0 5vw 2rem}
 .progress-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem}
@@ -583,6 +644,11 @@ nav{
 .reg-closed .emo{font-size:2.5rem;margin-bottom:.8rem}
 .reg-closed h2{font-family:var(--fd);font-size:1.2rem;font-weight:700;color:var(--red);margin-bottom:.5rem}
 .reg-closed p{font-size:.85rem;color:var(--gray);line-height:1.6}
+
+/* ─────────────────────────────────────────
+   BYTECOINS PAGE
+───────────────────────────────────────── */
+
 
 /* ── Join picker ── */
 .join-picker{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.8rem}
@@ -750,7 +816,8 @@ footer span{color:var(--orange)}
   .team-code{word-break:break-all;max-width:100%}
 
   .join-picker{grid-template-columns:1fr}
-  .member-row-fields{grid-template-columns:1fr}
+  .member-row-fields{grid-template-columns:1fr
+  }
 
   /* Timeline — left-aligned on mobile */
   .htl-track::before{left:24px}
@@ -776,6 +843,10 @@ footer span{color:var(--orange)}
   /* Admin button */
   .admin-link-bar{right:12px;bottom:12px}
   .admin-link-btn{padding:8px 14px;font-size:.72rem}
+  
+  .byte-podium{
+    grid-template-columns:1fr;
+}
 }
 
 /* ─────────────────────────────────────────
@@ -883,6 +954,7 @@ footer span{color:var(--orange)}
     <a onclick="go('home')"         id="nl-home" class="active">Home</a>
     <a onclick="go('about')"        id="nl-about">About</a>
     <a onclick="go('participants')" id="nl-participants">Participants</a>
+    <a onclick="go('bytecoins')" id="nl-bytecoins">ByteCoins</a>
     <a onclick="go('register')"     id="nl-register" class="nav-cta">Join Now</a>
   </div>
 
@@ -900,6 +972,7 @@ footer span{color:var(--orange)}
   <a onclick="mobileGo('home')"         id="mnl-home" class="active">Home</a>
   <a onclick="mobileGo('about')"        id="mnl-about">About</a>
   <a onclick="mobileGo('participants')" id="mnl-participants">Participants</a>
+  <a onclick="mobileGo('bytecoins')" id="mnl-bytecoins">ByteCoins</a>
   <a onclick="mobileGo('register')"     id="mnl-register" class="nav-cta">Join Now →</a>
 </div>
 
@@ -1084,6 +1157,42 @@ footer span{color:var(--orange)}
   </div>
 </div>
 
+<!-- ══ ByteCoins ══ -->
+
+<div class="page" id="page-bytecoins">
+
+  <div class="p-banner">
+    <h1>🏆 ByteCoins Leaderboard</h1>
+    <p>
+      Earn points. Climb the rankings.
+      Become the ultimate Byte Brainiacs champion.
+    </p>
+  </div>
+
+  <div class="byte-wrap">
+
+    <div class="byte-podium" id="byte-podium">
+    </div>
+
+    <table class="byte-table">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Team</th>
+          <th>College</th>
+          <th>ByteCoins</th>
+        </tr>
+      </thead>
+
+      <tbody id="byte-table-body">
+      </tbody>
+
+    </table>
+
+  </div>
+
+</div>
+
 <footer><span>Byte Brainiacs</span> · Built for the bold · © 2026</footer>
 
 <!-- Admin shortcut (bottom-right) — opens admin.html -->
@@ -1139,6 +1248,74 @@ async function loadData(){
 
 async function syncFromStorage(){
   await loadData();
+}
+
+/* ── BYTECOINS RENDERER ── */
+function renderByteCoins(){
+
+    const sorted =
+        [...teams]
+        .sort((a,b)=>
+            (b.byteCoins || 0)
+            -
+            (a.byteCoins || 0)
+        );
+
+    const table =
+        document.getElementById("byte-table-body");
+
+    const podium =
+        document.getElementById("byte-podium");
+
+    if(!table || !podium) return;
+
+    table.innerHTML = "";
+    podium.innerHTML = "";
+    if(sorted.length === 0){
+
+    podium.innerHTML = `
+        <div class="empty">
+            <div class="emo">🪙</div>
+            <p>No ByteCoins have been earned yet.</p>
+        </div>
+    `;
+
+    return;
+}
+
+    sorted.slice(0,3).forEach((team,index)=>{
+
+        const medals =
+            ["🥇","🥈","🥉"];
+
+        podium.innerHTML += `
+            <div class="podium-card">
+                <div class="podium-rank">
+                    ${medals[index]}
+                </div>
+
+                <h3>${team.name}</h3>
+
+                <div class="podium-score">
+                    ${team.byteCoins || 0}
+                </div>
+
+                <small>${team.college}</small>
+            </div>
+        `;
+    });
+
+    sorted.forEach((team,index)=>{
+
+        table.innerHTML += `
+        <tr>
+            <td>#${index+1}</td>
+            <td>${team.name}</td>
+            <td>${team.college}</td>
+            <td>🪙 ${team.byteCoins || 0}</td>
+        </tr>
+        `;
+    });
 }
 
 /* ══ CODE GENERATOR ══ */
@@ -1247,6 +1424,11 @@ async function go(page, subtype){
 
   if(page==='participants')
     await renderParticipants();
+
+  if(page==='bytecoins'){
+    await loadData();
+    renderByteCoins();
+}
 
   if(page==='register'){
     await checkRegistrationOpen();
@@ -1483,7 +1665,7 @@ async function submitTeam(){
 
   await addDoc(
     collection(db,"teams"),
-    {code,name:teamName,college,members,source:"registered",at:new Date().toISOString()}
+    {code,name:teamName,college,members,byteCoins:0,source:"registered",at:new Date().toISOString()}
   );
 
   await loadData();
