@@ -945,6 +945,14 @@ word-break:break-all;
 color:var(--white);
 }
 
+.admin-footer{
+    margin-top:40px;
+    padding:25px;
+    text-align:center;
+    color:var(--gray);
+    border-top:1px solid var(--border);
+    font-size:.9rem;
+}
 /* ===========================
    RESPONSIVE ADMIN
    Breakpoints: 1024 / 768 / 425 / 375 / 320
@@ -1112,38 +1120,56 @@ Logout
 <div class="cards">
 
 <div class="card">
-<div class="card-label">
-Registered Teams
-</div>
-<div
-class="card-value"
-id="team-count">
-0
-</div>
+
+    <div class="card-label">
+        Registered Teams
+    </div>
+
+    <div class="card-value"
+         id="team-count">
+        0
+    </div>
+
 </div>
 
 <div class="card">
-<div class="card-label">
-Waiting Participants
-</div>
-<div
-class="card-value"
-id="solo-count">
-0
-</div>
+
+    <div class="card-label">
+        Waiting Participants
+    </div>
+
+    <div class="card-value"
+         id="solo-count">
+        0
+    </div>
+
 </div>
 
 <div class="card">
-<div class="card-label">
-Colleges
-</div>
-<div
-class="card-value"
-id="college-count">
-0
-</div>
+
+    <div class="card-label">
+        Colleges
+    </div>
+
+    <div class="card-value"
+         id="college-count">
+        0
+    </div>
+
 </div>
 
+<div class="card">
+
+    <div class="card-label">
+        Total ByteCoins
+    </div>
+
+    <div class="card-value"
+         id="coin-count">
+        0
+    </div>
+
+</div>
 </div>
 <!-- ACTIONS -->
 
@@ -1216,6 +1242,8 @@ the waiting pool.
 <th>Members</th>
 
 <th>Source</th>
+
+<th>ByteCoins</th>
 
 <th>Action</th>
 
@@ -1296,6 +1324,10 @@ onkeyup="renderSolos()">
 </div>
 </div>
 
+<footer class="admin-footer">
+    Byte Brainiacs Admin Portal • 2026
+</footer>
+
 <script type="module">
 
 import { initializeApp }
@@ -1340,6 +1372,7 @@ const ADMIN_PASSWORD =
 let teams = [];
 let solos = [];
 let suggestions = [];
+let byteCoins = {};
 
 async function loadData(){
 
@@ -1364,6 +1397,15 @@ async function loadData(){
             id: d.id,
             ...d.data()
         }));
+    teams.forEach(team => {
+
+    if(team.byteCoins === undefined){
+
+        team.byteCoins = 0;
+
+    }
+
+});
 }
 
 /* ===========================
@@ -1576,17 +1618,27 @@ s=>s.status==='waiting'
 const colleges = new Set([
     ...teams
         .filter(t => t.college)
-        .map(t => t.college),
+        .map(t => t.college.toLowerCase()),
 
     ...solos
         .filter(s => s.college)
-        .map(s => s.college)
+        .map(s => s.college.toLowerCase())
 ]);
 
 document.getElementById(
 'college-count'
 ).textContent =
 colleges.size;
+
+document.getElementById(
+'coin-count'
+).textContent =
+
+teams.reduce(
+(a,t)=>
+a + (t.byteCoins || 0),
+0
+);
 
 }
 
@@ -1624,7 +1676,7 @@ if(teams.length === 0){
     document.createElement('tr');
 
   emptyRow.innerHTML = `
-    <td colspan="6">
+    <td colspan="7">
       <div class="empty-state">
         <span class="empty-icon">👥</span>
         No registered teams yet. Approve a suggestion below or wait
@@ -1672,6 +1724,14 @@ ${escapeHtml(team.source || 'registered')}
 
 <td>
 
+${team.byteCoins || 0}
+
+🪙
+
+</td>
+
+<td>
+
 <div class="row-actions">
 
 <button
@@ -1681,6 +1741,16 @@ class="expand-btn"
 onclick="toggleTeamDetail(${index})">
 
 ${isOpen ? 'Hide' : 'View'} Details
+
+</button>
+
+<button
+
+class="expand-btn"
+
+onclick="addCoins(${index})">
+
+🪙 Coins
 
 </button>
 
@@ -1711,7 +1781,7 @@ detailRow.className = 'detail-row';
 
 detailRow.innerHTML = `
 
-<td colspan="6">
+<td colspan="7">
 
 <div class="detail-grid">
 
@@ -1782,7 +1852,7 @@ if(filtered.length === 0){
       : 'No participants match your search.';
 
   emptyRow.innerHTML = `
-    <td colspan="6">
+    <td colspan="7">
       <div class="empty-state">
         <span class="empty-icon">🙋</span>
         ${message}
@@ -1916,12 +1986,28 @@ try{
 
 async function createAssignedTeam(members){
 
-  const teamNumber =
-    Date.now();
+  const teamName = prompt(
+    "Enter Team Name:"
+);
 
-  const teamName =
-    "Assigned Team " +
-    (teams.length + 1 + Math.floor(Math.random()*100));
+if(
+    !teamName ||
+    !teamName.trim()
+){
+    return false;
+}
+if(
+    teams.some(
+        t =>
+        t.name.toLowerCase() ===
+        teamName.toLowerCase()
+    )
+){
+    alert("Team name already exists.");
+    return false;
+}
+
+const teamNumber = Date.now();
 
   const code =
     genCode(
@@ -1933,20 +2019,14 @@ async function createAssignedTeam(members){
     collection(db,"teams"),
     {
       name: teamName,
-
-      college:
-        members[0].college,
-
+      college: members[0].college,
       code: code,
-
       members: members,
-
       source: "admin",
-
-      at:
-        new Date().toISOString()
+      byteCoins: 0,
+      at: new Date().toISOString()
     }
-  );
+);
 
   for(const member of members){
 
@@ -1971,6 +2051,8 @@ async function createAssignedTeam(members){
   }
 
   await loadData();
+
+  return true;
 
 }
 
@@ -2152,9 +2234,16 @@ async function approveSuggestion(index){
 
   try{
 
-    await createAssignedTeam(sugg.members);
+    const created =
+    await createAssignedTeam(
+        sugg.members
+    );
 
-    suggestions.splice(index, 1);
+if(!created){
+    return;
+}
+
+suggestions.splice(index,1);
 
     await render();
 
@@ -2191,6 +2280,51 @@ async function rejectSuggestion(index){
   renderSuggestions();
 
   showToast('Suggestion rejected', 'info');
+}
+
+async function addCoins(index){
+
+    const amount = prompt(
+    "Enter ByteCoins (+50 to add, -20 to deduct):"
+);
+
+    if(
+        amount === null
+    ) return;
+
+    const coins =
+        parseInt(amount);
+
+    if(
+        isNaN(coins)
+    ) return;
+
+    const team =
+        teams[index];
+
+    const total =
+        (team.byteCoins || 0)
+        + coins;
+
+    await updateDoc(
+        doc(
+            db,
+            "teams",
+            team.id
+        ),
+        {
+            byteCoins: total
+        }
+    );
+
+    await render();
+
+    showToast(
+    coins >= 0
+        ? `${coins} ByteCoins added.`
+        : `${Math.abs(coins)} ByteCoins deducted.`,
+    "success"
+);
 }
 
 /* ===========================
@@ -2449,6 +2583,7 @@ window.renderSolos        = renderSolos;
 window.renderSuggestions  = renderSuggestions;
 window.approveSuggestion  = approveSuggestion;
 window.rejectSuggestion   = rejectSuggestion;
+window.addCoins = addCoins;
 window.render             = render;
 
 </script>
